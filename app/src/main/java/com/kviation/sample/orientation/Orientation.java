@@ -16,14 +16,17 @@ public class Orientation implements SensorEventListener {
     void onOrientationChanged(float pitch, float roll);
   }
 
-  private static final int SENSOR_DELAY_MICROS = 50 * 1000; // 50ms
+  private static final int SENSOR_DELAY_MICROS = 500 * 1000; // 50ms
 
   private final WindowManager mWindowManager;
 
   private final SensorManager mSensorManager;
 
   @Nullable
-  private final Sensor mRotationSensor;
+  private final Sensor mAccelerometer;
+
+  private final Sensor mGyroscope;
+
 
   private int mLastAccuracy;
   private Listener mListener;
@@ -33,7 +36,8 @@ public class Orientation implements SensorEventListener {
     mSensorManager = (SensorManager) activity.getSystemService(Activity.SENSOR_SERVICE);
 
     // Can be null if the sensor hardware is not available
-    mRotationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+    mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
   }
 
   public void startListening(Listener listener) {
@@ -41,11 +45,17 @@ public class Orientation implements SensorEventListener {
       return;
     }
     mListener = listener;
-    if (mRotationSensor == null) {
-      LogUtil.w("Rotation vector sensor not available; will not provide orientation data.");
+    if (mAccelerometer == null && mGyroscope == null) {
+      LogUtil.w("accelerometer and gyroscope vector sensor not available; will not provide orientation data.");
       return;
     }
-    mSensorManager.registerListener(this, mRotationSensor, SENSOR_DELAY_MICROS);
+    if(mAccelerometer != null) {
+      mSensorManager.registerListener(this, mAccelerometer, SENSOR_DELAY_MICROS);
+    }
+    if(mGyroscope !=null) {
+      mSensorManager.registerListener(this, mGyroscope, SENSOR_DELAY_MICROS);
+    }
+
   }
 
   public void stopListening() {
@@ -68,13 +78,13 @@ public class Orientation implements SensorEventListener {
     if (mLastAccuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
       return;
     }
-    if (event.sensor == mRotationSensor) {
-      updateOrientation(event.values);
+    if (event.sensor == mAccelerometer || event.sensor == mGyroscope) {
+      updateOrientation(event.sensor.getName(), event.values);
     }
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
-  private void updateOrientation(float[] rotationVector) {
+  private void updateOrientation(String sensor, float[] rotationVector) {
     float[] rotationMatrix = new float[9];
     SensorManager.getRotationMatrixFromVector(rotationMatrix, rotationVector);
 
