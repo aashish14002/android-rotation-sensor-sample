@@ -96,8 +96,8 @@ public class Orientation implements SensorEventListener {
       return;
     }
     if (event.sensor == mAccelerometer || event.sensor == mGyroscope) {
-      String readings = event.sensor.getName()+","+event.values[0]+","+event.values[1]+","+event.values[2];
-      onExtpu(readings);
+      String readings = event.values[0]+","+event.values[1]+","+event.values[2]+"\n";
+      onExtpu(event.sensor.getName(),readings);
       updateOrientation(event.sensor.getName(), event.values);
     }
   }
@@ -130,9 +130,9 @@ public class Orientation implements SensorEventListener {
     return false;
   }
 
-  public void onExtpu(String readings)
+  public void onExtpu(String sensor,String readings)
   {
-    String f="sensor-data.txt";
+    String f=sensor+".txt";
     if(permission())
     {
       if(!isExternalStorageWritable())
