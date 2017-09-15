@@ -5,6 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.kviation.sample.orientation.MainActivity">
+    <Button
+        android:id="@+id/button"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Start" />
 
     <com.kviation.sample.orientation.AttitudeIndicator
         android:id="@+id/attitude_indicator"
