@@ -119,36 +119,6 @@ public class Orientation implements SensorEventListener {
 
   }
 
-  public void onExt(String readings)
-  {
-    String f="sensor-data.txt";
-    if(permission())
-    {
-      if(!isExternalStorageWritable())
-      {
-        Log.e("error:","not available");
-        Toast.makeText(mactivity.getApplicationContext(),"not available",Toast.LENGTH_SHORT).show();
-        return;
-      }
-      File file=new File(Environment.getExternalStorageDirectory(),f);
-      if (!file.mkdirs())
-      {
-        Log.e("error:", "Directory not created");
-        //Toast.makeText(this,"not created",Toast.LENGTH_SHORT).show();
-      }
-
-
-      Toast.makeText(mactivity.getApplicationContext(),"Ext."+String.valueOf(file),Toast.LENGTH_SHORT).show();
-      Log.v("file ",String.valueOf(file));
-      writeSensorData(file+file.separator+f,readings);
-
-    }
-    else
-    {
-      Toast.makeText(mactivity.getApplicationContext(),"Ext. not done",Toast.LENGTH_SHORT).show();
-    }
-
-  }
 
   public boolean isExternalStorageWritable()
   {
@@ -186,37 +156,6 @@ public class Orientation implements SensorEventListener {
     else
     {
       Toast.makeText(mactivity.getApplicationContext(),"Extpu. not done ",Toast.LENGTH_SHORT).show();
-
-    }
-
-  }
-
-  public void onExtpr(View v)
-  {
-    String f="Expr.txt";
-    if(permission())
-    {
-      if(!isExternalStorageWritable())
-      {
-        Log.e("error:","not available");
-        Toast.makeText(mactivity.getApplicationContext(),"not available",Toast.LENGTH_SHORT).show();
-        return;
-      }
-      File file=new File(mactivity.getExternalFilesDir(null),f);
-      if (!file.mkdirs())
-      {
-        Log.e("error:", "Directory not created");
-        //Toast.makeText(this,"not created",Toast.LENGTH_SHORT).show();
-      }
-
-      Toast.makeText(mactivity.getApplicationContext(),"Extpr."+String.valueOf(file),Toast.LENGTH_SHORT).show();
-      Log.v("file ",String.valueOf(file));
-      //write_file(file+file.separator+f);
-
-    }
-    else
-    {
-      Toast.makeText(mactivity.getApplicationContext(),"Extpr. not done",Toast.LENGTH_SHORT).show();
 
     }
 
