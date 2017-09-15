@@ -34,14 +34,16 @@ public class Orientation implements SensorEventListener {
 
   private static final int SENSOR_DELAY_MICROS = 500 * 1000; // 50ms
   final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=123;
-  private final WindowManager mWindowManager;
 
-  private final SensorManager mSensorManager;
+  private  final WindowManager mWindowManager;
+
+  private  final SensorManager mSensorManager;
 
   @Nullable
-  private final Sensor mAccelerometer;
+  private  final Sensor mAccelerometer;
+  @Nullable
+  private  final Sensor mGyroscope;
 
-  private final Sensor mGyroscope;
   private Activity mactivity;
 
 
@@ -69,11 +71,16 @@ public class Orientation implements SensorEventListener {
   // accelerometer and magnetometer based rotation matrix
   private float[] rotationMatrix = new float[9];
 
+  private final float[] deltaRotationVector = new float[4];
+
   public static final float EPSILON = 0.000000001f;
 
   private static final float NS2S = 1.0f / 1000000000.0f;
   private float timestamp;
   private boolean initState = true;
+
+  private float[] accelRotationMatrix =new float[9];
+  private float[] gyroRotationMatrix =new float[9];
 
   public Orientation(Activity activity) {
     mWindowManager = activity.getWindow().getWindowManager();
@@ -130,16 +137,10 @@ public class Orientation implements SensorEventListener {
     if (mLastAccuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
       return;
     }
-    if (event.sensor == mAccelerometer) {
-      System.arraycopy(event.values, 0, accel, 0, 3);
-      calculateAccMagOrientation();
-    } else if(event.sensor == mGyroscope){
-      gyroFunction(event);
-    }
 
     String readings = event.values[0]+","+event.values[1]+","+event.values[2]+"\n";
     onExtpu(event.sensor.getName(),readings);
-    updateOrientation(event.sensor.getName(), event.values);
+    updateOrientation(event.sensor.getName(), event);
 
   }
 
@@ -346,10 +347,51 @@ public class Orientation implements SensorEventListener {
 
 
   @SuppressWarnings("SuspiciousNameCombination")
-  private void updateOrientation(String sensor, float[] rotationVector) {
-//    float[] rotationMatrix = new float[9];
+  private void updateOrientation(String sensor, SensorEvent event) {
 //    SensorManager.getRotationMatrixFromVector(rotationMatrix, rotationVector);
 //
+    if(sensor == "ACCELEROMETER"){
+      SensorManager.getRotationMatrix(accelRotationMatrix,null,event.values,null);
+    }
+    else{
+      if (timestamp != 0) {
+        final float dT = (event.timestamp - timestamp) * NS2S;
+        // Axis of the rotation sample, not normalized yet.
+        float axisX = event.values[0];
+        float axisY = event.values[1];
+        float axisZ = event.values[2];
+
+        // Calculate the angular speed of the sample
+        float omegaMagnitude = (float)Math.sqrt(axisX*axisX + axisY*axisY + axisZ*axisZ);
+
+        // Normalize the rotation vector if it's big enough to get the axis
+        // (that is, EPSILON should represent your maximum allowable margin of error)
+        if (omegaMagnitude > EPSILON) {
+          axisX /= omegaMagnitude;
+          axisY /= omegaMagnitude;
+          axisZ /= omegaMagnitude;
+        }
+
+        // Integrate around this axis with the angular speed by the timestep
+        // in order to get a delta rotation from this sample over the timestep
+        // We will convert this axis-angle representation of the delta rotation
+        // into a quaternion before turning it into the rotation matrix.
+        float thetaOverTwo = omegaMagnitude * dT / 2.0f;
+        float sinThetaOverTwo = (float)Math.sin(thetaOverTwo);
+        float cosThetaOverTwo = (float)Math.cos(thetaOverTwo);
+        deltaRotationVector[0] = sinThetaOverTwo * axisX;
+        deltaRotationVector[1] = sinThetaOverTwo * axisY;
+        deltaRotationVector[2] = sinThetaOverTwo * axisZ;
+        deltaRotationVector[3] = cosThetaOverTwo;
+      }
+      timestamp = event.timestamp;
+
+      SensorManager.getRotationMatrixFromVector(gyroRotationMatrix, deltaRotationVector);
+      // User code should concatenate the delta rotation we computed with the current rotation
+      // in order to get the updated rotation.
+      // rotationCurrent = rotationCurrent * deltaRotationMatrix;
+    }
+
     final int worldAxisForDeviceAxisX;
     final int worldAxisForDeviceAxisY;
 
@@ -373,6 +415,10 @@ public class Orientation implements SensorEventListener {
         worldAxisForDeviceAxisX = SensorManager.AXIS_MINUS_Z;
         worldAxisForDeviceAxisY = SensorManager.AXIS_X;
         break;
+    }
+
+    for(int i=0;i<9;i++){
+      rotationMatrix[i]=gyroRotationMatrix[i]+accelRotationMatrix[i];
     }
 
     float[] adjustedRotationMatrix = new float[9];
