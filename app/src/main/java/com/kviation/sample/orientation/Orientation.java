@@ -1,20 +1,27 @@
 
 package com.kviation.sample.orientation;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Environment;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,7 +33,7 @@ public class Orientation implements SensorEventListener {
   }
 
   private static final int SENSOR_DELAY_MICROS = 500 * 1000; // 50ms
-
+  final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=123;
   private final WindowManager mWindowManager;
 
   private final SensorManager mSensorManager;
@@ -90,16 +97,16 @@ public class Orientation implements SensorEventListener {
     }
     if (event.sensor == mAccelerometer || event.sensor == mGyroscope) {
       String readings = event.sensor.getName()+","+event.values[0]+","+event.values[1]+","+event.values[2];
-      writeSensorData(readings);
+      onExt(readings);
       updateOrientation(event.sensor.getName(), event.values);
     }
   }
 
-  public void writeSensorData(String readings)
+  public void writeSensorData(String f,String readings)
   {
-    String fileName="sensor-data.txt";
-    File file= new File(mactivity.getFilesDir(), fileName);
-    String f = String.valueOf(file);
+//    String fileName="sensor-data.txt";
+//    File file= new File(mactivity.getFilesDir(), fileName);
+//    String f = String.valueOf(file);
     try {
       FileOutputStream fout=new FileOutputStream(f,true);
       fout.write(readings.getBytes());
@@ -111,6 +118,126 @@ public class Orientation implements SensorEventListener {
     }
 
   }
+
+  public void onExt(String readings)
+  {
+    String f="sensor-data.txt";
+    if(permission())
+    {
+      if(!isExternalStorageWritable())
+      {
+        Log.e("error:","not available");
+        Toast.makeText(mactivity.getApplicationContext(),"not available",Toast.LENGTH_SHORT).show();
+        return;
+      }
+      File file=new File(Environment.getExternalStorageDirectory(),f);
+      if (!file.mkdirs())
+      {
+        Log.e("error:", "Directory not created");
+        //Toast.makeText(this,"not created",Toast.LENGTH_SHORT).show();
+      }
+
+
+      Toast.makeText(mactivity.getApplicationContext(),"Ext."+String.valueOf(file),Toast.LENGTH_SHORT).show();
+      Log.v("file ",String.valueOf(file));
+      writeSensorData(file+file.separator+f,readings);
+
+    }
+    else
+    {
+      Toast.makeText(mactivity.getApplicationContext(),"Ext. not done",Toast.LENGTH_SHORT).show();
+    }
+
+  }
+
+  public boolean isExternalStorageWritable()
+  {
+    String state = Environment.getExternalStorageState();
+    if (Environment.MEDIA_MOUNTED.equals(state))
+    {
+      return true;
+    }
+    return false;
+  }
+
+  public void onExtpu(View v)
+  {
+    String f="Expu.txt";
+    if(permission())
+    {
+      if(!isExternalStorageWritable())
+      {
+        Log.e("error:","not available");
+        Toast.makeText(mactivity.getApplicationContext(),"not available",Toast.LENGTH_SHORT).show();
+        return;
+      }
+      File file=new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),f);
+      if (!file.mkdirs())
+      {
+        Log.e("error:", "Directory not created");
+        //Toast.makeText(this,"not created",Toast.LENGTH_SHORT).show();
+      }
+
+      Toast.makeText(mactivity.getApplicationContext(),"Extpu."+String.valueOf(file),Toast.LENGTH_SHORT).show();
+      Log.v("file ",String.valueOf(file));
+      //write_file(file+file.separator+f);
+
+    }
+    else
+    {
+      Toast.makeText(mactivity.getApplicationContext(),"Extpu. not done ",Toast.LENGTH_SHORT).show();
+
+    }
+
+  }
+
+  public void onExtpr(View v)
+  {
+    String f="Expr.txt";
+    if(permission())
+    {
+      if(!isExternalStorageWritable())
+      {
+        Log.e("error:","not available");
+        Toast.makeText(mactivity.getApplicationContext(),"not available",Toast.LENGTH_SHORT).show();
+        return;
+      }
+      File file=new File(mactivity.getExternalFilesDir(null),f);
+      if (!file.mkdirs())
+      {
+        Log.e("error:", "Directory not created");
+        //Toast.makeText(this,"not created",Toast.LENGTH_SHORT).show();
+      }
+
+      Toast.makeText(mactivity.getApplicationContext(),"Extpr."+String.valueOf(file),Toast.LENGTH_SHORT).show();
+      Log.v("file ",String.valueOf(file));
+      //write_file(file+file.separator+f);
+
+    }
+    else
+    {
+      Toast.makeText(mactivity.getApplicationContext(),"Extpr. not done",Toast.LENGTH_SHORT).show();
+
+    }
+
+  }
+
+  public boolean permission()
+  {
+    if (ContextCompat.checkSelfPermission(mactivity.getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+    {
+
+      ActivityCompat.requestPermissions(mactivity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+      return false;
+    }
+    else
+
+      return true;
+
+  }
+
+
+
   @SuppressWarnings("SuspiciousNameCombination")
   private void updateOrientation(String sensor, float[] rotationVector) {
     float[] rotationMatrix = new float[9];
