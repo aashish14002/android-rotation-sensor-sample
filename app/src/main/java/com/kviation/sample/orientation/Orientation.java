@@ -379,17 +379,17 @@ public class Orientation implements SensorEventListener {
 //    SensorManager.remapCoordinateSystem(rotationMatrix, worldAxisForDeviceAxisX,
 //        worldAxisForDeviceAxisY, adjustedRotationMatrix);
 //
-//    // Transform rotation matrix into azimuth/pitch/roll
-//    float[] orientation = new float[3];
-//    SensorManager.getOrientation(adjustedRotationMatrix, orientation);
+    // Transform rotation matrix into azimuth/pitch/roll
+    float[] orientation = new float[3];
+    SensorManager.getOrientation(rotationMatrix, orientation);
 
-    float yaw=(float) Math.atan2(rotationMatrix[3],rotationMatrix[0]);
-    float pitch=(float) Math.atan2(-rotationMatrix[6],Math.sqrt(Math.pow(rotationMatrix[7],2)+Math.pow(rotationMatrix[8],2)));
-    float roll=(float)Math.atan2(rotationMatrix[7],rotationMatrix[8]);
+//    float yaw=(float) Math.atan2(rotationMatrix[3],rotationMatrix[0]);
+//    float pitch=(float) Math.atan2(-rotationMatrix[6],Math.sqrt(Math.pow(rotationMatrix[7],2)+Math.pow(rotationMatrix[8],2)));
+//    float roll=(float)Math.atan2(rotationMatrix[7],rotationMatrix[8]);
 
-    // Convert radians to degrees
-//    float pitch = orientation[1] * -57;
-//    float roll = orientation[2] * -57;
+     //Convert radians to degrees
+    float pitch = orientation[1] * -57;
+    float roll = orientation[2] * -57;
 
     mListener.onOrientationChanged(pitch, roll);
   }
